@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Controle de Tarefas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #taskInput {
+      padding: 10px;
+      width: 250px;
+    }
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+    }
+    .addBtn {
+      background: #4CAF50;
+      color: white;
+    }
+    .startBtn {
+      background: #2196F3;
+      color: white;
+    }
+    .stopBtn {
+      background: #f44336;
+      color: white;
+    }
+    .task {
+      background: white;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stats {
+      background: #fff;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 6px;
+      box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Controle de Tarefas com Cronômetro</h1>
+
+  <input type="text" id="taskInput" placeholder="Digite uma nova tarefa">
+  <button class="addBtn" onclick="addTask()">Adicionar Tarefa</button>
+
+  <div id="taskList"></div>
+
+  <div class="stats">
+    <h3>📊 Estatísticas</h3>
+    <p>Total de Tarefas: <span id="totalTasks">0</span></p>
+    <p>Tempo Total: <span id="totalTime">00:00:00</span></p>
+    <p>Tempo Médio por Tarefa: <span id="avgTime">00:00:00</span></p>
+  </div>
+
+  <script>
+    let tasks = [];
+    let totalTime = 0;
+
+    function addTask() {
+      const taskName = document.getElementById("taskInput").value;
+      if (taskName.trim() === "") return;
+      
+      const task = {
+        name: taskName,
+        startTime: null,
+        elapsed: 0,
+        interval: null
+      };
+      tasks.push(task);
+      document.getElementById("taskInput").value = "";
+      renderTasks();
+      updateStats();
+    }
+
+    function renderTasks() {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
+      tasks.forEach((task, index) => {
+        const div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `
+          <span>${task.name} - ⏱ ${formatTime(task.elapsed)}</span>
+          <div>
+            <button class="startBtn" onclick="startTask(${index})">Iniciar</button>
+            <button class="stopBtn" onclick="stopTask(${index})">Parar</button>
+          </div>
+        `;
+        taskList.appendChild(div);
+      });
+    }
+
+    function startTask(index) {
+      let task = tasks[index];
+      if (task.interval) return; // já está rodando
+
+      task.startTime = Date.now();
+      task.interval = setInterval(() => {
+        task.elapsed = Date.now() - task.startTime + task.elapsed;
+        task.startTime = Date.now();
+        renderTasks();
+        updateStats();
+      }, 1000);
+    }
+
+    function stopTask(index) {
+      let task = tasks[index];
+      if (!task.interval) return;
+
+      clearInterval(task.interval);
+      task.interval = null;
+      renderTasks();
+      updateStats();
+    }
+
+    function updateStats() {
+      const totalTasks = tasks.length;
+      totalTime = tasks.reduce((sum, t) => sum + t.elapsed, 0);
+      const avgTime = totalTasks > 0 ? totalTime / totalTasks : 0;
+
+      document.getElementById("totalTasks").textContent = totalTasks;
+      document.getElementById("totalTime").textContent = formatTime(totalTime);
+      document.getElementById("avgTime").textContent = formatTime(avgTime);
+    }
+
+    function formatTime(ms) {
+      let totalSeconds = Math.floor(ms / 1000);
+      let hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      let minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      let seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    }
+  </script>
+
+</body>
+</html>
